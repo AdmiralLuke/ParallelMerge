@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-// #include <pthread.h>
+#include <pthread.h>
 
 /**
  * @brief Struct to pass the length from an array as an argument
@@ -172,7 +172,7 @@ int main() {
         .length = 25000000,
     };
     printArray(tmp);
-    mergeSort(&tmp);
+    parallelMerge(&tmp, 4);
     printArray(tmp);
     printf("%d",isSorted(tmp));
     return 0;
