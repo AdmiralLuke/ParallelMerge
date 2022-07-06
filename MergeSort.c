@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+// #include <pthread.h>
 
 /**
  * @brief Struct to pass the length from an array as an argument
@@ -32,6 +32,14 @@ typedef struct {
  */
 int* allocIntArray(int size) {
     return (int *)malloc(sizeof(int) * size);
+}
+
+p_thread* allocStructArray(int size) {
+    return (p_thread *)malloc(sizeof(p_thread) * size);
+}
+
+pthread_t* allocThreadArray(int size) {
+    return (pthread_t *)malloc(sizeof(pthread_t) * size);
 }
 
 /**
@@ -120,34 +128,51 @@ void parallelMerge(IntArray* a ,int threadCount) {
     if (threadCount < 2) {
         mergeSort(a);
     } else {
-        p_thread threads[threadCount];
+        p_thread threads[] = allocStructArray(threadCount);
+        pthread_t th[] = allocThreadArray(threadCount);
         int tmpThreadStart = 0;
         for (int i = 0; i < threadCount; i++) {
             if (i == 0) {
-                threads[i] = {
+                p_thread tmpStruct = {
                     .start = 0,
-                    .end = (int)(a->size / threadCouunt),
-                    .size = .end - .start,
-                    .array = copyOfRange(a, 0, .end),
+                    .end = (int)(a->length / threadCount),
+                    .size = (int)(a->length / threadCount),
+                    .array = copyOfRange(*a, 0, (int)(a->length / threadCount)),
                 };
+                threads[i] = tmpStruct;
                 tmpThreadStart = (int)(a->length / threadCount);
             } else if (i != threadCount - 2) {
-                threads[i] = {
+                p_thread tmpStruct = {
                     .start = tmpThreadStart + 1,
-                    .end = .start + (int)(a->size / thread_count),
-                    .size = .end - .start,
-                    .a = copyOfRange(a, .start, .end),
+                    .end = (tmpThreadStart + 1) + (int)(a->length / threadCount),
+                    .size =(int)(a->length / threadCount),
+                    .array = copyOfRange(*a, tmpThreadStart + 1, (tmpThreadStart + 1) + (int)(a->length / threadCount)),
                 };
+                threads[i] = tmpStruct; 
                 tmpThreadStart += 1 + (int)(a->length / threadCount);
             } else {
-                threads[i] = {
-                    .start = tmpThreadStart + 1;
-                    .end = .start + (int)(a->size / thread_count) + (a->size%thread_count),
-                    .size = .start - .end,
-                    .a = copyOfRange(a, start, end), 
+                p_thread tmpStruct = {
+                    .start = tmpThreadStart + 1,
+                    .end = (tmpThreadStart + 1) + (int)(a->length / threadCount) + (a->length%threadCount),
+                    .size = (int)(a->length / threadCount) + (a->length%threadCount),
+                    .array = copyOfRange(*a, tmpThreadStart + 1, (tmpThreadStart + 1) + (int)(a->length / threadCount) + (a->length%threadCount)), 
                 };
+                threads[i] = tmpStruct;
+            }
+            int rc;
+            rc = pthread_create(&th[i], NULL, merge, &threads[i].array);
+            if (rc) {
+                printf("Fehler beim Erstellen der Threads");
+                exit(-1);
             }
         }
+        for (int i = 0; i < threadCount; i += 2) {
+            pthread_join(th[i], NULL);
+            pthread_join(th[i + 1], NULL);
+            merge(&threads[i].array, &threads[i+1].array, a);
+        }
+        free(th);
+        free(threads);
     }
 }
 
