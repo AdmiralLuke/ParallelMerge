@@ -37,10 +37,11 @@ int* allocIntArray(int size) {
 p_thread* allocStructArray(int size) {
     return (p_thread *)malloc(sizeof(p_thread) * size);
 }
-
+/*
 pthread_t* allocThreadArray(int size) {
     return (pthread_t *)malloc(sizeof(pthread_t) * size);
 }
+*/
 
 /**
  * @brief testing method to print the content of an array
@@ -124,12 +125,14 @@ int isSorted(IntArray a) {
  * @param a input array
  * @param threadCount number of threads
  */
+/*
 void parallelMerge(IntArray* a ,int threadCount) {
     if (threadCount < 2) {
         mergeSort(a);
     } else {
-        p_thread* threads[] = allocStructArray(threadCount);
-        pthread_t* th[] = allocThreadArray(threadCount);
+        p_thread* threads = (p_thread *)malloc(sizeof(p_thread) * threadCount);
+        pthread_t* th = (pthread_t *)malloc(sizeof(pthread_t) * threadCount);
+	printf("1\n");
         int tmpThreadStart = 0;
         for (int i = 0; i < threadCount; i++) {
             if (i == 0) {
@@ -139,7 +142,7 @@ void parallelMerge(IntArray* a ,int threadCount) {
                     .size = (int)(a->length / threadCount),
                     .array = copyOfRange(*a, 0, (int)(a->length / threadCount)),
                 };
-                threads[i] = &tmpStruct;
+                threads[i] = tmpStruct;
                 tmpThreadStart = (int)(a->length / threadCount);
             } else if (i != threadCount - 2) {
                 p_thread tmpStruct = {
@@ -148,7 +151,7 @@ void parallelMerge(IntArray* a ,int threadCount) {
                     .size =(int)(a->length / threadCount),
                     .array = copyOfRange(*a, tmpThreadStart + 1, (tmpThreadStart + 1) + (int)(a->length / threadCount)),
                 };
-                threads[i] = &tmpStruct; 
+                threads[i] = tmpStruct; 
                 tmpThreadStart += 1 + (int)(a->length / threadCount);
             } else {
                 p_thread tmpStruct = {
@@ -157,24 +160,28 @@ void parallelMerge(IntArray* a ,int threadCount) {
                     .size = (int)(a->length / threadCount) + (a->length%threadCount),
                     .array = copyOfRange(*a, tmpThreadStart + 1, (tmpThreadStart + 1) + (int)(a->length / threadCount) + (a->length%threadCount)), 
                 };
-                threads[i] = &tmpStruct;
+                threads[i] = tmpStruct;
             }
             int rc;
-            rc = pthread_create(&th[i], NULL, merge, &threads[i]->array);
+            rc = pthread_create(&th[i], NULL, mergeSort, &threads[i].array);
             if (rc) {
                 printf("Fehler beim Erstellen der Threads");
                 exit(-1);
             }
         }
+	printf("Im Here\n");
         for (int i = 0; i < threadCount; i += 2) {
             pthread_join(th[i], NULL);
             pthread_join(th[i + 1], NULL);
-            merge(&threads[i]->array, &threads[i+1]->array, a);
+	    printf("banane%d\n",i);
+            merge(&threads[i].array, &threads[i+1].array, a);
         }
+	printf("drei\n");
         free(th);
         free(threads);
     }
 }
+*/
 
 /**
  * @brief generates array with random numbers in range of 0 to given size
@@ -193,13 +200,13 @@ int* generateRandomArray(int size) {
 
 int main() {
     IntArray tmp = {
-        .a = generateRandomArray(25000000),
-        .length = 25000000,
+        .a = generateRandomArray(25),
+        .length = 25,
     };
     printArray(tmp);
-    parallelMerge(&tmp, 4);
+    mergeSort(&tmp);
     printArray(tmp);
-    printf("%d",isSorted(tmp));
+    printf("%d\n",isSorted(tmp));
     return 0;
 }
 
